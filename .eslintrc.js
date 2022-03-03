@@ -34,5 +34,6 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'error',
     '@typescript-eslint/ban-types': 'warn',
     'react/react-in-jsx-scope': 'off',
+    'react/prop-types': 'off',
   }
 }
