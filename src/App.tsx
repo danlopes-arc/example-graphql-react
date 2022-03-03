@@ -9,6 +9,8 @@ import { GetUsersQuery, GET_USERS_QUERY } from './graphql/getUsers';
 
 export const App: React.VFC = () => {
   const [createUser] = useMutation<CreateUserMutation, CreateUserVariables>(CREATE_USER_MUTATION);
+  const { data: getUsersData, refetch } = useQuery<GetUsersQuery>(GET_USERS_QUERY);
+
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
 
@@ -31,6 +33,7 @@ export const App: React.VFC = () => {
       await new Promise<void>((r) => setTimeout(() => r(), 1500));
       setName('');
       setAge('');
+      refetch();
     } catch (error) {
       setHasErrors(true);
     } finally {
@@ -56,25 +59,17 @@ export const App: React.VFC = () => {
         </fieldset>
         {hasErrors && <p>Oops, something went wrong :(</p>}
       </form>
-      <UserList />
+      {!getUsersData ? (
+        <div>loading users...</div>
+      ) : (
+        <ul>
+          {getUsersData.getUsers.map((user) => (
+            <li key={user.id}>
+              <strong>{user.name}</strong>, {user.age}
+            </li>
+          ))}
+        </ul>
+      )}
     </>
-  );
-};
-
-const UserList: React.VFC = () => {
-  const { data } = useQuery<GetUsersQuery>(GET_USERS_QUERY);
-
-  if (!data) {
-    return <div>loading...</div>;
-  }
-
-  return (
-    <ul>
-      {data.getUsers.map((user) => (
-        <li key={user.id}>
-          <strong>{user.name}</strong>, {user.age}
-        </li>
-      ))}
-    </ul>
   );
 };
