@@ -1,15 +1,8 @@
-import { useMutation, useQuery } from '@apollo/client';
 import React, { useState } from 'react';
-import {
-  CreateUserMutation,
-  CreateUserVariables,
-  CREATE_USER_MUTATION,
-} from './graphql/createUser';
-import { GetUsersQuery, GET_USERS_QUERY } from './graphql/getUsers';
+import { useUsers } from './services/UsersService';
 
 export const App: React.VFC = () => {
-  const [createUser] = useMutation<CreateUserMutation, CreateUserVariables>(CREATE_USER_MUTATION);
-  const { data: getUsersData, refetch } = useQuery<GetUsersQuery>(GET_USERS_QUERY);
+  const { createUser, users } = useUsers();
 
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
@@ -22,18 +15,10 @@ export const App: React.VFC = () => {
     setIsLoading(true);
     setHasErrors(false);
     try {
-      await createUser({
-        variables: {
-          input: {
-            name,
-            age: parseInt(age) || 0,
-          },
-        },
-      });
-      await new Promise<void>((r) => setTimeout(() => r(), 1500));
+      await createUser(name, parseInt(age) || 0);
+
       setName('');
       setAge('');
-      refetch();
     } catch (error) {
       setHasErrors(true);
     } finally {
@@ -59,11 +44,13 @@ export const App: React.VFC = () => {
         </fieldset>
         {hasErrors && <p>Oops, something went wrong :(</p>}
       </form>
-      {!getUsersData ? (
+      {!users ? (
         <div>loading users...</div>
+      ) : users.length === 0 ? (
+        <div>no users</div>
       ) : (
         <ul>
-          {getUsersData.getUsers.map((user) => (
+          {users.map((user) => (
             <li key={user.id}>
               <strong>{user.name}</strong>, {user.age}
             </li>
