@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@apollo/client';
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import {
   CreateUserMutation,
   CreateUserVariables,
@@ -58,4 +58,28 @@ export const useUsers = (): UsersService => {
     throw new Error('useUsers must be within UsersProvider');
   }
   return service;
+};
+
+type RequestStatus = 'initial' | 'loading' | 'success' | 'fail';
+
+export interface CreateUserService {
+  status: RequestStatus;
+  createUser: (name: string, age: number) => void;
+}
+
+export const useCreateUser = (): CreateUserService => {
+  const { createUser: _createUser } = useUsers();
+  const [status, setStatus] = useState<RequestStatus>('initial');
+
+  const createUser = async (name: string, age: number): Promise<void> => {
+    try {
+      setStatus('loading');
+      await _createUser(name, age);
+      setStatus('success');
+    } catch (error) {
+      setStatus('fail');
+    }
+  };
+
+  return { createUser, status };
 };

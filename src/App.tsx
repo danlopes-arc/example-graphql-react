@@ -1,35 +1,29 @@
-import React, { useState } from 'react';
-import { useUsers } from './services/UsersService';
+import React, { useEffect, useState } from 'react';
+import { useCreateUser, useUsers } from './services/UsersService';
 
 export const App: React.VFC = () => {
-  const { createUser, users } = useUsers();
+  const { users } = useUsers();
+  const { createUser, status } = useCreateUser();
 
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasErrors, setHasErrors] = useState(false);
+  useEffect(() => {
+    if (status === 'success') {
+      setAge('');
+      setName('');
+    }
+  }, [status]);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    setIsLoading(true);
-    setHasErrors(false);
-    try {
-      await createUser(name, parseInt(age) || 0);
-
-      setName('');
-      setAge('');
-    } catch (error) {
-      setHasErrors(true);
-    } finally {
-      setIsLoading(false);
-    }
+    createUser(name, parseInt(age) || 0);
   };
 
   return (
     <>
       <form onSubmit={onSubmit}>
-        <fieldset disabled={isLoading}>
+        <fieldset disabled={status === 'loading'}>
           <label>
             <div>name</div>
             <input type="text" value={name} onChange={(e): void => setName(e.target.value)} />
@@ -42,7 +36,8 @@ export const App: React.VFC = () => {
             <input type="submit" value="create" />
           </div>
         </fieldset>
-        {hasErrors && <p>Oops, something went wrong :(</p>}
+        {status === 'fail' && <p>Oops, something went wrong :(</p>}
+        {status === 'loading' && <p>Creating...</p>}
       </form>
       {!users ? (
         <div>loading users...</div>
