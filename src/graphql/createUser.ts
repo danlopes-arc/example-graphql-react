@@ -6,6 +6,7 @@ export const CREATE_USER_MUTATION = gql`
       id
       name
       age
+      state
     }
   }
 `;
@@ -15,12 +16,14 @@ export interface CreateUserMutation {
     id: number;
     name: string;
     age: number;
+    state: string;
   };
 }
 
 export interface CreateUserInput {
   name: string;
   age: number;
+  state: string;
 }
 
 export interface CreateUserVariables {

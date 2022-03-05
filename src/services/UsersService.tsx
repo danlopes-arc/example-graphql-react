@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@apollo/client';
 import React, { createContext, useContext, useState } from 'react';
 import {
+  CreateUserInput,
   CreateUserMutation,
   CreateUserVariables,
   CREATE_USER_MUTATION,
@@ -30,7 +31,7 @@ export interface Result {
 
 export interface UsersService {
   users: User[] | undefined;
-  createUser: (name: string, age: number) => Promise<void>;
+  createUser: (input: CreateUserInput) => Promise<void>;
 }
 
 export const UserContext = createContext<UsersService | undefined>(undefined);
@@ -43,14 +44,11 @@ export const UsersProvider: React.FC = ({ children }) => {
 
   const users: User[] | undefined = data?.getUsers;
 
-  const createUser = async (name: string, age: number): Promise<void> => {
+  const createUser = async (input: CreateUserInput): Promise<void> => {
     try {
       await createUserMutation({
         variables: {
-          input: {
-            name,
-            age,
-          },
+          input,
         },
       });
       await new Promise<void>((r) => setTimeout(() => r(), 1500));
@@ -82,7 +80,7 @@ type RequestStatus = 'initial' | 'loading' | 'success' | 'fail';
 
 export interface CreateUserService {
   status: RequestStatus;
-  createUser: (name: string, age: number) => void;
+  createUser: (input: CreateUserInput) => void;
   validationErrors: Record<string, string>;
 }
 
@@ -91,11 +89,11 @@ export const useCreateUser = (): CreateUserService => {
   const [status, setStatus] = useState<RequestStatus>('initial');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
-  const createUser = async (name: string, age: number): Promise<void> => {
+  const createUser = async (input: CreateUserInput): Promise<void> => {
     try {
       setStatus('loading');
       setValidationErrors({});
-      await _createUser(name, age);
+      await _createUser(input);
       setStatus('success');
     } catch (error) {
       setStatus('fail');
