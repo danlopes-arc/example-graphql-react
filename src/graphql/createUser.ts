@@ -18,9 +18,11 @@ export interface CreateUserMutation {
   };
 }
 
+export interface CreateUserInput {
+  name: string;
+  age: number;
+}
+
 export interface CreateUserVariables {
-  input: {
-    name: string;
-    age: number;
-  };
+  input: CreateUserInput;
 }

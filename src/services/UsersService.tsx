@@ -7,6 +7,17 @@ import {
 } from '../graphql/createUser';
 import { GetUsersQuery, GET_USERS_QUERY } from '../graphql/getUsers';
 
+interface ValidationResponse {
+  type: 'validation';
+  messages: Record<string, string>;
+}
+
+export class ValidationError extends Error {
+  constructor(public readonly messages: Record<string, string>) {
+    super('ValidationError');
+  }
+}
+
 export interface User {
   id: number;
   name: string;
@@ -44,7 +55,14 @@ export const UsersProvider: React.FC = ({ children }) => {
       });
       await new Promise<void>((r) => setTimeout(() => r(), 1500));
       refetch();
-    } catch (error) {
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      const ex = error.graphQLErrors?.[0]?.extensions?.exception?.response;
+      if (ex?.type === 'validation') {
+        throw new ValidationError((ex as ValidationResponse).messages);
+      }
+
       throw new Error('Could not create the user');
     }
   };
@@ -65,21 +83,27 @@ type RequestStatus = 'initial' | 'loading' | 'success' | 'fail';
 export interface CreateUserService {
   status: RequestStatus;
   createUser: (name: string, age: number) => void;
+  validationErrors: Record<string, string>;
 }
 
 export const useCreateUser = (): CreateUserService => {
   const { createUser: _createUser } = useUsers();
   const [status, setStatus] = useState<RequestStatus>('initial');
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const createUser = async (name: string, age: number): Promise<void> => {
     try {
       setStatus('loading');
+      setValidationErrors({});
       await _createUser(name, age);
       setStatus('success');
     } catch (error) {
       setStatus('fail');
+      if (error instanceof ValidationError) {
+        setValidationErrors(error.messages);
+      }
     }
   };
 
-  return { createUser, status };
+  return { createUser, status, validationErrors };
 };
